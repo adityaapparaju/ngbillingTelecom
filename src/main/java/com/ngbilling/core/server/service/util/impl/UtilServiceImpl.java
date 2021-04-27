@@ -178,7 +178,7 @@ public class UtilServiceImpl implements UtilService{
 		orderStatusDAO.save(invoiceOS);
 		
 		invoiceOS = new OrderStatusDTO();
-		invoiceOS.setOrderStatusFlag(OrderStatusFlag.FINISHED);
+		invoiceOS.setOrderStatusFlag(OrderStatusFlag.FINISHED);      
 		invoiceOS.setEntity(company);
 		invoiceOS.setDescription("Finished", language.getId());
 		orderStatusDAO.save(invoiceOS);
@@ -193,6 +193,8 @@ public class UtilServiceImpl implements UtilService{
 		invoiceOS.setDescription("Suspended ageing(auto)", language.getId());
 		orderStatusDAO.save(invoiceOS);	        
 
+		company.getCurrency().getEntities_1().add(company);
+		
 		OrderPeriodDTO orderPeriodDTO = new OrderPeriodDTO(company, new PeriodUnitDTO(ServerConstants.PERIOD_UNIT_MONTH), 1);
     	orderPeriodDTO = orderPeriodDAO.save(orderPeriodDTO);
     	orderPeriodDTO.setDescription("Monthly");
@@ -239,7 +241,6 @@ public class UtilServiceImpl implements UtilService{
     	for (ReportDTO reportDTO : reportDTOList)
     	{
     		//company.getReports().add(reportDTO);
-
     	}*/
     	
     	BillingProcessConfigurationDTO billingProcessConfigurationDTO = new BillingProcessConfigurationDTO();
@@ -445,183 +446,285 @@ public class UtilServiceImpl implements UtilService{
     	createNotificationMessage(ServerConstants.NOTIFICATION_TYPE_LOST_PASSWORD, "signup.notification.lost.password.update.title", "signup.notification.lost.password.update",company, language,locale);
     	createNotificationMessage(ServerConstants.NOTIFICATION_TYPE_INITIAL_CREDENTIALS, "signup.notification.initial.credentials.update.title", "signup.notification.initial.credentials.update",company, language,locale);
 
-        PaymentMethodTemplateDTO paymentMethodTemplateCardDTO = paymentMethodTemplateDAO.findByName(ServerConstants.PAYMENT_CARD);
-     	MetaField metaField = new MetaField();
-     	metaField.setEntity(company);
-     	metaField.setName("cc.cardholder.name");
-     	metaField.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
-     	metaField.setDataType(DataType.STRING);
-     	metaField.setDisabled(false);
-     	metaField.setMandatory(true);
-     	metaField.setPrimary(true);
-     	metaField.setDisplayOrder(1);
-     	metaField.setFieldUsage(MetaFieldType.TITLE);
-     	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaField);
+    	 PaymentMethodTemplateDTO paymentMethodTemplateCardDTO = paymentMethodTemplateDAO.findByName(ServerConstants.PAYMENT_CARD);
+      	MetaField metaField = new MetaField();
+      	metaField.setEntity(company);
+      	metaField.setName("cc.cardholder.name");
+      	metaField.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaField.setDataType(DataType.STRING);
+      	metaField.setDisabled(false);
+      	metaField.setMandatory(true);
+      	metaField.setPrimary(true);
+      	metaField.setDisplayOrder(1);
+      	metaField.setFieldUsage(MetaFieldType.TITLE);
+      	metaField = metaFieldDAO.save(metaField);
+      	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaField);
+      	
+      	MetaField metaFieldPaymentCardNumber = new MetaField();
+      	metaFieldPaymentCardNumber.setFieldUsage(MetaFieldType.PAYMENT_CARD_NUMBER);
+      	metaFieldPaymentCardNumber.setEntity(company);
+      	metaFieldPaymentCardNumber.setName("cc.number");
+      	metaFieldPaymentCardNumber.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldPaymentCardNumber.setDataType(DataType.STRING);
+      	metaFieldPaymentCardNumber.setDisabled(false);
+      	metaFieldPaymentCardNumber.setMandatory(true);
+      	metaFieldPaymentCardNumber.setPrimary(true);
+      	metaFieldPaymentCardNumber.setDisplayOrder(2);
+      	ValidationRule validationRule = new ValidationRule();
+      	validationRule.setRuleType(ValidationRuleType.PAYMENT_CARD);
+      	validationRule.setEnabled(true);
+      	validationRule = validationRuleDAO.save(validationRule);
+      	metaFieldPaymentCardNumber.setValidationRule(validationRule);
+      	metaFieldPaymentCardNumber = metaFieldDAO.save(metaFieldPaymentCardNumber);
 
-		metaField = new MetaField();
-     	metaField.setFieldUsage(MetaFieldType.PAYMENT_CARD_NUMBER);
-     	metaField.setName("cc.number");
-     	metaField.setDisplayOrder(2);
-     	ValidationRule validationRule = new ValidationRule();
-     	validationRule.setRuleType(ValidationRuleType.PAYMENT_CARD);
-     	validationRule.setEnabled(true);
-     	validationRule = validationRuleDAO.save(validationRule);
-     	metaField.setValidationRule(validationRule);
-     	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaField);
-     	
-     	
-     	int valRulId = jbillingTableDAO.findByName(ServerConstants.TABLE_VALIDATION_RULE).getId();
-     	InternationalDescriptionId internationalDescriptionId = new InternationalDescriptionId(valRulId, validationRule.getId(), 
-     			"errorMessage", language.getId());
-     	//internationalDescriptionDAO.save(internationalDescriptionId);
-     	InternationalDescriptionDTO internationalDescriptionDTO = new InternationalDescriptionDTO(internationalDescriptionId,
-     			getMessage("validation.payment.card.number.invalid",locale));
-     	internationalDescriptionDAO.save(internationalDescriptionDTO);
+      	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaFieldPaymentCardNumber);
+      	
+      	
+      	int valRulId = jbillingTableDAO.findByName(ServerConstants.TABLE_VALIDATION_RULE).getId();
+      	InternationalDescriptionId internationalDescriptionId = new InternationalDescriptionId(valRulId, validationRule.getId(), 
+      			"errorMessage", language.getId());
+      	//internationalDescriptionDAO.save(internationalDescriptionId);
+      	InternationalDescriptionDTO internationalDescriptionDTO = new InternationalDescriptionDTO(internationalDescriptionId,
+      			getMessage("validation.payment.card.number.invalid",locale));
+      	internationalDescriptionDAO.save(internationalDescriptionDTO);
+      	
+      	
+      	MetaField metaFieldDate = new MetaField();
+      	metaFieldDate.setFieldUsage(MetaFieldType.DATE);
+      	metaFieldDate.setEntity(company);
+      	metaFieldDate.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldDate.setDataType(DataType.STRING);
+      	metaFieldDate.setDisabled(false);
+      	metaFieldDate.setMandatory(true);
+      	metaFieldDate.setPrimary(true);
+      	SortedMap<String, String> attributes = new TreeMap<String, String>();
+      	attributes.put("regularExpression", "(?:0[1-9]|1[0-2])/[0-9]{4}");
+      	ValidationRule validationRuleRegex = new ValidationRule();
+      	validationRuleRegex.setRuleType(ValidationRuleType.REGEX);
+      	validationRuleRegex.setEnabled(true);
+      	validationRuleRegex.setRuleAttributes(attributes);
+      	validationRuleRegex = validationRuleDAO.save(validationRuleRegex);
+      	metaFieldDate.setName("cc.expiry.date");
+      	metaFieldDate.setDisplayOrder(3);
+
+      	metaFieldDate.setValidationRule(validationRuleRegex);
+      	metaFieldDate = metaFieldDAO.save(metaFieldDate);
+
+      	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaFieldDate);
+      	InternationalDescriptionId internationalDescriptionIdRegex = new InternationalDescriptionId(valRulId, validationRuleRegex.getId(), 
+      			"errorMessage", language.getId());
+      	
+      	InternationalDescriptionDTO internationalDescriptionExpiryDTO = new InternationalDescriptionDTO(internationalDescriptionIdRegex,
+      			getMessage("validation.payment.card.expiry.date.invalid",locale));
+      	internationalDescriptionDAO.save(internationalDescriptionExpiryDTO);
+      	
+      	
+      	MetaField metaFieldGatewayKey = new MetaField();
+      	metaFieldGatewayKey.setEntity(company);
+      	metaFieldGatewayKey.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldGatewayKey.setDataType(DataType.STRING);
+      	metaFieldGatewayKey.setFieldUsage(MetaFieldType.GATEWAY_KEY);
+      	metaFieldGatewayKey.setValidationRule(null);
+      	metaFieldGatewayKey.setName("cc.gateway.key");
+      	metaFieldGatewayKey.setDisplayOrder(4);
+      	metaFieldGatewayKey.setDisabled(true);
+      	metaFieldGatewayKey.setMandatory(false);
+      	metaFieldGatewayKey.setPrimary(true);
+
+      	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaFieldGatewayKey);
+      	
+      	MetaField metaFieldCCType = new MetaField();
+      	metaFieldCCType.setFieldUsage(MetaFieldType.CC_TYPE);
+      	metaFieldCCType.setName("cc.type");
+      	metaFieldCCType.setDisplayOrder(5);
+      	metaFieldCCType.setDataType(DataType.INTEGER);
+      	metaFieldCCType.setDisabled(true);
+      	metaFieldCCType.setMandatory(false);
+      	metaFieldCCType.setPrimary(true);
+      	metaFieldCCType.setEntity(company);
+      	metaFieldCCType.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldCCType = metaFieldDAO.save(metaFieldCCType);
+
+      	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaFieldCCType);
+      	
+      	
+      	PaymentMethodTemplateDTO paymentMethodTemplateAchDTO = paymentMethodTemplateDAO.findByName(ServerConstants.ACH);
+      	
+      	MetaField metaFieldBankRoutingNumber = new MetaField();
+
+      	metaFieldBankRoutingNumber.setDisabled(false);
+      	metaFieldBankRoutingNumber.setMandatory(true);
+      	metaFieldBankRoutingNumber.setFieldUsage(MetaFieldType.BANK_ROUTING_NUMBER);
+      	metaFieldBankRoutingNumber.setName("ach.routing.number");
+      	metaFieldBankRoutingNumber.setDisplayOrder(1);
+      	metaFieldBankRoutingNumber.setDataType(DataType.STRING);
+      	metaFieldBankRoutingNumber.setPrimary(true);
+      	metaFieldBankRoutingNumber.setEntity(company);
+      	metaFieldBankRoutingNumber.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+
+      	SortedMap<String, String> attributesRouting = new TreeMap<String, String>();
+      	attributesRouting.put("regularExpression", "(?<=\\\\s|^)\\\\d+(?=\\\\s|$)");
+      	ValidationRule validationRuleRouting = new ValidationRule();
+      	validationRuleRouting.setRuleType(ValidationRuleType.REGEX);
+      	validationRuleRouting.setEnabled(true);
+      	validationRuleRouting.setRuleAttributes(attributesRouting);
+      	validationRuleRouting = validationRuleDAO.save(validationRuleRouting);
+      	metaFieldBankRoutingNumber.setValidationRule(validationRuleRouting);
+      	metaFieldBankRoutingNumber = metaFieldDAO.save(metaFieldBankRoutingNumber);
+      	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaFieldBankRoutingNumber);
+      	
+      	
+      	InternationalDescriptionId internationalDescriptionIdRouting = new InternationalDescriptionId(valRulId, validationRuleRouting.getId(), 
+      			"errorMessage", language.getId());
+      	InternationalDescriptionDTO internationalDescriptionRoutingDTO = new InternationalDescriptionDTO(internationalDescriptionIdRouting,
+      			getMessage("validation.ach.aba.routing.number.invalid",locale));
+      	internationalDescriptionDAO.save(internationalDescriptionRoutingDTO);
+      	
+      	MetaField metaFieldTitle= new MetaField();
+      	metaFieldTitle.setDisabled(false);
+      	metaFieldTitle.setMandatory(true);
+      	metaFieldTitle.setPrimary(true);
+      	metaFieldTitle.setEntity(company);
+      	metaFieldTitle.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldTitle.setValidationRule(null);
+      	metaFieldTitle.setFieldUsage(MetaFieldType.TITLE);
+      	metaFieldTitle.setName("ach.customer.name");
+      	metaFieldTitle.setDisplayOrder(2);
+      	metaFieldTitle.setDataType(DataType.STRING);
+      	metaFieldTitle = metaFieldDAO.save(metaFieldTitle);
+      	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaFieldTitle);
+      	
+      	MetaField metaFieldBankAccountNumber= new MetaField();
+      	metaFieldBankAccountNumber.setDisabled(false);
+      	metaFieldBankAccountNumber.setMandatory(true);
+      	metaFieldBankAccountNumber.setPrimary(true);
+      	metaFieldBankAccountNumber.setEntity(company);
+      	metaFieldBankAccountNumber.setDataType(DataType.STRING);
+      	metaFieldBankAccountNumber.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldBankAccountNumber.setValidationRule(null);
+      	metaFieldBankAccountNumber.setFieldUsage(MetaFieldType.BANK_ACCOUNT_NUMBER);
+      	metaFieldBankAccountNumber.setName("ach.account.number");
+      	metaFieldBankAccountNumber.setDisplayOrder(3);
+      	metaFieldBankAccountNumber = metaFieldDAO.save(metaFieldBankAccountNumber);
+
+      	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaFieldBankAccountNumber);
+      	
+      	MetaField metaFieldBankName= new MetaField();
+      	metaFieldBankName.setDisabled(false);
+      	metaFieldBankName.setMandatory(true);
+      	metaFieldBankName.setPrimary(true);
+      	metaFieldBankName.setEntity(company);
+      	metaFieldBankName.setDataType(DataType.STRING);
+      	metaFieldBankName.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldBankName.setValidationRule(null);
+      	metaFieldBankName.setFieldUsage(MetaFieldType.BANK_NAME);
+      	metaFieldBankName.setName("ach.bank.name");
+      	metaFieldBankName.setDisplayOrder(4);
+      	metaFieldBankName = metaFieldDAO.save(metaFieldBankName);
+
+      	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaFieldBankName);
+      	
+      	MetaField metaFieldBankAccountType= new MetaField();
+      	metaFieldBankAccountType.setDisabled(false);
+      	metaFieldBankAccountType.setMandatory(true);
+      	metaFieldBankAccountType.setPrimary(true);
+      	metaFieldBankAccountType.setEntity(company);
+      	metaFieldBankAccountType.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldBankAccountType.setValidationRule(null);
+
+      	metaFieldBankAccountType.setFieldUsage(MetaFieldType.BANK_ACCOUNT_TYPE);
+      	metaFieldBankAccountType.setName("ach.account.type");
+      	metaFieldBankAccountType.setDisplayOrder(5);
+      	metaFieldBankAccountType.setDataType(DataType.ENUMERATION);
+      	metaFieldBankAccountType = metaFieldDAO.save(metaFieldBankAccountType);
+
+      	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaFieldBankAccountType);
+      	
+      	
+      	EnumerationDTO enumerationDTO = new EnumerationDTO();
+      	enumerationDTO.setName("ach.account.type");
+      	enumerationDTO.setEntity(company);
+      	
+      	enumerationDTO = enumerationDAO.save(enumerationDTO);
+      	
+      	EnumerationValueDTO enumerationValueCheckingDTO = new EnumerationValueDTO();
+      	enumerationValueCheckingDTO.setValue("CHECKING");
+      	enumerationValueCheckingDTO.setEnumeration(enumerationDTO);
+      	enumerationValueDAO.save(enumerationValueCheckingDTO);
+      	
+      	EnumerationValueDTO enumerationValueSavingsDTO = new EnumerationValueDTO();
+      	enumerationValueSavingsDTO.setValue("SAVINGS");
+      	enumerationValueSavingsDTO.setEnumeration(enumerationDTO);
+      	enumerationValueDAO.save(enumerationValueSavingsDTO);
+      	
+      	
+      	MetaField metaFieldGatewayKeyAch= new MetaField();
+      	metaFieldGatewayKeyAch.setPrimary(true);
+      	metaFieldGatewayKeyAch.setEntity(company);
+      	metaFieldGatewayKeyAch.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldGatewayKeyAch.setValidationRule(null);
+
+      	metaFieldGatewayKeyAch.setDisabled(true);
+      	metaFieldGatewayKeyAch.setMandatory(false);
+      	
+      	metaFieldGatewayKeyAch.setFieldUsage(MetaFieldType.GATEWAY_KEY);
+      	metaFieldGatewayKeyAch.setName("ach.gateway.key");
+      	metaFieldGatewayKeyAch.setDisplayOrder(6);
+      	metaFieldGatewayKeyAch.setDataType(DataType.STRING);
+      	metaFieldGatewayKeyAch = metaFieldDAO.save(metaFieldGatewayKeyAch);
+      	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaFieldGatewayKeyAch);
+
+      	PaymentMethodTemplateDTO paymentMethodTemplateChequeDTO = paymentMethodTemplateDAO.findByName(ServerConstants.CHEQUE);
+
+      	MetaField metaFieldBankNameCheque= new MetaField();
+      	metaFieldBankNameCheque.setPrimary(true);
+      	metaFieldBankNameCheque.setEntity(company);
+      	metaFieldBankNameCheque.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldBankNameCheque.setValidationRule(null);
+      	metaFieldBankNameCheque.setDisabled(false);
+      	metaFieldBankNameCheque.setMandatory(true);
+      	
+      	metaFieldBankNameCheque.setFieldUsage(MetaFieldType.BANK_NAME);
+      	metaFieldBankNameCheque.setName("cheque.bank.name");
+      	metaFieldBankNameCheque.setDisplayOrder(1);
+      	metaFieldBankNameCheque.setDataType(DataType.STRING);
+      	metaFieldBankNameCheque = metaFieldDAO.save(metaFieldBankNameCheque);
+
+      	paymentMethodTemplateChequeDTO.addPaymentTemplateMetaField(metaFieldBankNameCheque);
+
+      	MetaField metaFieldCheque= new MetaField();
+      	metaFieldCheque.setPrimary(true);
+      	metaFieldCheque.setEntity(company);
+      	metaFieldCheque.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldCheque.setValidationRule(null);
+      	metaFieldCheque.setDisabled(false);
+      	metaFieldCheque.setMandatory(true);
+      	metaFieldCheque.setFieldUsage(MetaFieldType.CHEQUE_NUMBER);
+      	metaFieldCheque.setName("cheque.number");
+      	metaFieldCheque.setDisplayOrder(2);
+      	metaFieldCheque.setDataType(DataType.STRING);
+      	metaFieldCheque = metaFieldDAO.save(metaFieldCheque);
 
 
-		metaField = new MetaField();
-     	metaField.setFieldUsage(MetaFieldType.DATE);
-     	SortedMap<String, String> attributes = new TreeMap<String, String>();
-     	attributes.put("regularExpression", "(?:0[1-9]|1[0-2])/[0-9]{4}");
-     	ValidationRule validationRuleRegex = new ValidationRule();
-     	validationRuleRegex.setRuleType(ValidationRuleType.REGEX);
-     	validationRuleRegex.setEnabled(true);
-     	validationRuleRegex.setRuleAttributes(attributes);
-     	validationRuleRegex = validationRuleDAO.save(validationRuleRegex);
-     	metaField.setName("cc.expiry.date");
-     	metaField.setDisplayOrder(3);
+      	paymentMethodTemplateChequeDTO.addPaymentTemplateMetaField(metaFieldCheque);
 
-     	metaField.setValidationRule(validationRuleRegex);
-     	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaField);
-     	InternationalDescriptionId internationalDescriptionIdRegex = new InternationalDescriptionId(valRulId, validationRuleRegex.getId(), 
-     			"errorMessage", language.getId());
-     	
-     	InternationalDescriptionDTO internationalDescriptionExpiryDTO = new InternationalDescriptionDTO(internationalDescriptionIdRegex,
-     			getMessage("validation.payment.card.expiry.date.invalid",locale));
-     	internationalDescriptionDAO.save(internationalDescriptionExpiryDTO);
+      	MetaField metaFieldDateCheque= new MetaField();
+      	metaFieldDateCheque.setPrimary(true);
+      	metaFieldDateCheque.setEntity(company);
+      	metaFieldDateCheque.setEntityType(EntityType.PAYMENT_METHOD_TEMPLATE);
+      	metaFieldDateCheque.setValidationRule(null);
+      	metaFieldDateCheque.setDisabled(false);
+      	metaFieldDateCheque.setMandatory(true);
+      	metaFieldDateCheque.setFieldUsage(MetaFieldType.DATE);
+      	metaFieldDateCheque.setName("cheque.date");
+      	metaFieldDateCheque.setDisplayOrder(3);
+      	metaFieldDateCheque = metaFieldDAO.save(metaFieldDateCheque);
 
+      	paymentMethodTemplateChequeDTO.addPaymentTemplateMetaField(metaFieldDateCheque);
 
-		metaField = new MetaField();
-     	metaField.setFieldUsage(MetaFieldType.GATEWAY_KEY);
-     	metaField.setValidationRule(null);
-
-     	metaField.setName("cc.gateway.key");
-     	metaField.setDisplayOrder(4);
-     	metaField.setDisabled(true);
-     	metaField.setMandatory(false);
-     	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaField);
-
-		metaField = new MetaField();
-     	metaField.setFieldUsage(MetaFieldType.CC_TYPE);
-     	metaField.setName("cc.type");
-     	metaField.setDisplayOrder(5);
-     	metaField.setDataType(DataType.INTEGER);
-     	paymentMethodTemplateCardDTO.addPaymentTemplateMetaField(metaField);
-     	
-     	
-     	PaymentMethodTemplateDTO paymentMethodTemplateAchDTO = paymentMethodTemplateDAO.findByName(ServerConstants.ACH);
-		metaField = new MetaField();
-     	metaField.setDisabled(false);
-     	metaField.setMandatory(true);
-     	
-     	metaField.setFieldUsage(MetaFieldType.BANK_ROUTING_NUMBER);
-     	metaField.setName("ach.routing.number");
-     	metaField.setDisplayOrder(1);
-     	metaField.setDataType(DataType.STRING);
-     	SortedMap<String, String> attributesRouting = new TreeMap<String, String>();
-     	attributes.put("regularExpression", "(?<=\\\\s|^)\\\\d+(?=\\\\s|$)");
-     	ValidationRule validationRuleRouting = new ValidationRule();
-     	validationRuleRouting.setRuleType(ValidationRuleType.REGEX);
-     	validationRuleRouting.setEnabled(true);
-     	validationRuleRouting.setRuleAttributes(attributesRouting);
-     	validationRuleRouting = validationRuleDAO.save(validationRuleRouting);
-     	metaField.setValidationRule(validationRuleRouting);
-
-     	
-     	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaField);
-     	InternationalDescriptionId internationalDescriptionIdRouting = new InternationalDescriptionId(valRulId, validationRuleRouting.getId(), 
-     			"errorMessage", language.getId());
-     	InternationalDescriptionDTO internationalDescriptionRoutingDTO = new InternationalDescriptionDTO(internationalDescriptionIdRouting,
-     			getMessage("validation.ach.aba.routing.number.invalid",locale));
-     	internationalDescriptionDAO.save(internationalDescriptionRoutingDTO);
-
-		metaField = new MetaField();
-     	metaField.setValidationRule(null);
-     	metaField.setFieldUsage(MetaFieldType.TITLE);
-     	metaField.setName("ach.customer.name");
-     	metaField.setDisplayOrder(2);
-     	metaField.setDataType(DataType.STRING);
-     	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaField);
-
-		metaField = new MetaField();
-     	metaField.setFieldUsage(MetaFieldType.BANK_ACCOUNT_NUMBER);
-     	metaField.setName("ach.account.number");
-     	metaField.setDisplayOrder(3);
-     	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaField);
-
-		metaField = new MetaField();
-     	metaField.setFieldUsage(MetaFieldType.BANK_NAME);
-     	metaField.setName("ach.bank.name");
-     	metaField.setDisplayOrder(4);
-     	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaField);
-
-		metaField = new MetaField();
-     	metaField.setFieldUsage(MetaFieldType.BANK_ACCOUNT_TYPE);
-     	metaField.setName("ach.account.type");
-     	metaField.setDisplayOrder(5);
-     	metaField.setDataType(DataType.ENUMERATION);
-     	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaField);
-     	
-     	
-     	EnumerationDTO enumerationDTO = new EnumerationDTO();
-     	enumerationDTO.setName("ach.account.type");
-     	enumerationDTO.setEntity(company);
-     	enumerationDTO = enumerationDAO.save(enumerationDTO);
-     	
-     	EnumerationValueDTO enumerationValueCheckingDTO = new EnumerationValueDTO();
-     	enumerationValueCheckingDTO.setValue("CHECKING");
-     	enumerationValueCheckingDTO.setEnumeration(enumerationDTO);
-     	enumerationValueDAO.save(enumerationValueCheckingDTO);
-     	
-     	EnumerationValueDTO enumerationValueSavingsDTO = new EnumerationValueDTO();
-     	enumerationValueSavingsDTO.setValue("SAVINGS");
-     	enumerationValueSavingsDTO.setEnumeration(enumerationDTO);
-     	enumerationValueDAO.save(enumerationValueSavingsDTO);
-
-		metaField = new MetaField();
-     	metaField.setDisabled(true);
-     	metaField.setMandatory(false);
-     	metaField.setFieldUsage(MetaFieldType.GATEWAY_KEY);
-     	metaField.setName("ach.gateway.key");
-     	metaField.setDisplayOrder(6);
-     	metaField.setDataType(DataType.STRING);
-     	paymentMethodTemplateAchDTO.addPaymentTemplateMetaField(metaField);
-
-     	PaymentMethodTemplateDTO paymentMethodTemplateChequeDTO = paymentMethodTemplateDAO.findByName(ServerConstants.CHEQUE);
-		metaField = new MetaField();
-     	metaField.setDisabled(false);
-     	metaField.setMandatory(true);
-       	metaField.setFieldUsage(MetaFieldType.BANK_NAME);
-     	metaField.setName("cheque.bank.name");
-     	metaField.setDisplayOrder(1);
-     	metaField.setDataType(DataType.STRING);
-     	paymentMethodTemplateChequeDTO.addPaymentTemplateMetaField(metaField);
-
-		metaField = new MetaField();
-     	metaField.setFieldUsage(MetaFieldType.CHEQUE_NUMBER);
-     	metaField.setName("cheque.number");
-     	metaField.setDisplayOrder(2);
-     	paymentMethodTemplateChequeDTO.addPaymentTemplateMetaField(metaField);
-
-		metaField = new MetaField();
-     	metaField.setFieldUsage(MetaFieldType.DATE);
-     	metaField.setName("cheque.date");
-     	metaField.setDisplayOrder(3);
-     	paymentMethodTemplateChequeDTO.addPaymentTemplateMetaField(metaField);
-
-		paymentMethodTemplateDAO.save(paymentMethodTemplateChequeDTO);
-     	paymentMethodTemplateDAO.save(paymentMethodTemplateAchDTO);
-     	paymentMethodTemplateDAO.save(paymentMethodTemplateCardDTO);
+      	paymentMethodTemplateDAO.save(paymentMethodTemplateChequeDTO);
+      	paymentMethodTemplateDAO.save(paymentMethodTemplateAchDTO);
+      	paymentMethodTemplateDAO.save(paymentMethodTemplateCardDTO);
  
 	}
 
